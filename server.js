@@ -23,20 +23,17 @@ await mongoClient.connect()
   .catch(error => console.log("Database conection problem", error));
 
 // coleções
+
+
 const participants = db.collection("participants");
 const messages = db.collection("messages");
 
-// para enviar o nome do participante
+
+
 app.post('/participants', async (req, res) => {
-  //para validar o objeto de usuários
   const userSchema = joi.string().required();
   const { name } = req.body;
-  const { to } = req.body;
-  const { text } = req.body;
-  const { type } = req.body;
   const validation = userSchema.validate(name)
-
-  //para enviar o nome do usuário
 
   try {
     if (!validation.error) {
@@ -73,23 +70,22 @@ app.get('/participants', async (req, res) => {
   }
 })
 
-// app.post('/messages', async (req, res) => {
+app.post('/messages', async (req, res) => {
+  let { to } = req.body;
+  let { text } = req.body;
+  let { type } = req.body;
+  let user = req.headers.user;
 
-//   try {
-//     if (text) {
-//       await messages.insertOne({
-//         to: to,
-//         text: text,
-//         type: type,
-//       })
-//       res.sendStatus(200)
-//       console.log('a mensagem ', text, ' foi enviada')
-//     }
-//   }
-//   catch (error) {
-//     console.log(error, ' error ocurred')
-//     if (validation.error) {
-//       res.status(422).send(error)
-//     }
-//   }
-// })
+  try {
+    await messages.insertOne({
+      from: user,
+      to: to,
+      text: text,
+      type: type,
+    })
+
+  } catch (error) {
+    res.sendStatus(500);
+    console.log(error)
+  }
+})
