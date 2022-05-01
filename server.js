@@ -32,29 +32,29 @@ app.post('/participants', async (req, res) => {
   const { name } = req.body;
   const validation = userSchema.validate(name)
 
-  // para checar se o nome está em uso meu médoto (deu errado)
-  // let nameInUse = false;
-  // if (await participants.find({ name })) {
-  //   nameInUse = true;
-  //   console.log('this name is already in use');
-  // }
-  // if (nameInUse == true) {
-  //   res.sendStatus(409);
-  //   return;
-  // }
-
   //para enviar o nome do usuário
 
   try {
     if (!validation.error) {
-      await participants.insertOne({ name: name })
-      res.sendStatus(200)
+      let currentUser = await participants.findOne({ name: name });
+      if (!currentUser) {
+        await participants.insertOne({ name: name, lastStatus: Date.now() });
+        res.sendStatus(200)
+      }
+      if (currentUser) {
+        res.sendStatus(409)
+      }
     }
   }
+
   catch (error) {
-    console.log(error, 'error')
-    if (validation.error)
+    console.log(error, ' error ocurred')
+    if (validation.error) {
       res.status(422).send(error)
-    console.log('o nome ' + name + ' não foi enviado devido ao erro:', validation.error)
+    }
   }
+})
+
+app.get('/participants', async (req, res) => {
+  res.send()
 })
