@@ -98,3 +98,18 @@ app.post('/messages', async (req, res) => {
     console.log(error)
   }
 })
+
+app.get('/messages', async (req, res) => {
+  // let limit = req.query.limit
+
+  try {
+    const messagesThatWillBeSent = await messages
+      .find()
+      .toArray();
+    // let lastNMessages = messages.splice(messages.length - limit + 1, messages.length);
+    res.send(messagesThatWillBeSent);
+  } catch {
+    res.sendStatus(500);
+  }
+
+})
