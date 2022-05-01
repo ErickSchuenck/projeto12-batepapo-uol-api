@@ -32,12 +32,16 @@ app.post('/participants', async (req, res) => {
   const { name } = req.body;
   const validation = userSchema.validate(name)
 
-  // para checar se o nome está em uso
-  const nameInUse = false;
-  if () {
-    nameInUse = true
-    console.log('this name is already in use')
-  }
+  // para checar se o nome está em uso meu médoto (deu errado)
+  // let nameInUse = false;
+  // if (await participants.find({ name })) {
+  //   nameInUse = true;
+  //   console.log('this name is already in use');
+  // }
+  // if (nameInUse == true) {
+  //   res.sendStatus(409);
+  //   return;
+  // }
 
   //para enviar o nome do usuário
 
@@ -46,7 +50,6 @@ app.post('/participants', async (req, res) => {
       await participants.insertOne({ name: name })
       res.sendStatus(200)
     }
-
   }
   catch (error) {
     console.log(error, 'error')
