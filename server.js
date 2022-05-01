@@ -25,17 +25,18 @@ await mongoClient.connect()
 const participants = db.collection("participants");
 const messages = db.collection("messages");
 
-//para validar o objeto de usuários
-const userSchema = joi.string().alphanum().required();
+
 
 // para enviar o nome do participante
 app.post('/participants', async (req, res) => {
+  //para validar o objeto de usuários
+  const userSchema = joi.string().alphanum().required();
   const { name } = req.body;
   const validation = userSchema.validate(name)
 
   try {
     if (!validation.error) {
-      db.participants.insertOne(name)
+      await participants.insertOne(name)
       res.sendStatus(200)
       console.log('o nome' + name + 'foi enviado')
     }
@@ -46,21 +47,3 @@ app.post('/participants', async (req, res) => {
     console.log('o nome' + name + 'não foi enviado')
   }
 })
-
-
-
-
-// db.collection("users").insertOne({
-//   email: "joao@email.com",
-//   password: "minha_super_senha"
-// });
-
-// db.collection("users").findOne({
-//   email: "joao@email.com"
-// }).then(user => {
-//   console.log(user);
-// });
-
-// db.collection("users").find().toArray().then(users => {
-//   console.log(users); // array de usuários
-// });
