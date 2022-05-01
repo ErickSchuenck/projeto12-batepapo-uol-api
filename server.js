@@ -25,25 +25,33 @@ await mongoClient.connect()
 const participants = db.collection("participants");
 const messages = db.collection("messages");
 
-
-
 // para enviar o nome do participante
 app.post('/participants', async (req, res) => {
   //para validar o objeto de usuários
-  const userSchema = joi.string().alphanum().required();
+  const userSchema = joi.string().required();
   const { name } = req.body;
   const validation = userSchema.validate(name)
 
+  // para checar se o nome está em uso
+  const nameInUse = false;
+  if () {
+    nameInUse = true
+    console.log('this name is already in use')
+  }
+
+  //para enviar o nome do usuário
+
   try {
     if (!validation.error) {
-      await participants.insertOne(name)
+      await participants.insertOne({ name: name })
       res.sendStatus(200)
-      console.log('o nome' + name + 'foi enviado')
     }
+
   }
   catch (error) {
+    console.log(error, 'error')
     if (validation.error)
       res.status(422).send(error)
-    console.log('o nome' + name + 'não foi enviado')
+    console.log('o nome ' + name + ' não foi enviado devido ao erro:', validation.error)
   }
 })
