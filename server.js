@@ -4,6 +4,7 @@ import { MongoClient, ObjectId } from "mongodb";
 import dotenv from "dotenv";
 import joi from "joi";
 import { text } from "express";
+import dayjs from 'dayjs'
 
 let db;
 const app = express();
@@ -74,7 +75,14 @@ app.post('/messages', async (req, res) => {
   let { to } = req.body;
   let { text } = req.body;
   let { type } = req.body;
+  let currentTime = dayjs().format('HH:mm:ss');
   let user = req.headers.user;
+
+  // const toSchema = joi.string().required();
+  // const typeSchema = joi.string().required();
+  // const fromSchema = joi.string().required();
+
+  // const validation = userSchema.validate(name)
 
   try {
     await messages.insertOne({
@@ -82,8 +90,9 @@ app.post('/messages', async (req, res) => {
       to: to,
       text: text,
       type: type,
+      time: currentTime,
     })
-
+    res.send(201)
   } catch (error) {
     res.sendStatus(500);
     console.log(error)
