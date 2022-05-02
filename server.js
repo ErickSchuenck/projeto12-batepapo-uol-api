@@ -104,17 +104,19 @@ app.post('/messages', async (req, res) => {
 })
 
 app.get('/messages', async (req, res) => {
+  const limit = req.query.limit ? parseInt(req.query.limit) : 100
 
   try {
     const messagesThatWillBeSent = await messages
-      .find()
+      .find({ $or: [{ to: 'Todos' }, { to: req.header.user }, { from: req.header.user }] })
+      .sort({ _id: -1 })
+      .limit(limit)
       .toArray();
-    res.send(messagesThatWillBeSent);
+    res.send(messagesThatWillBeSent.reverse());
   }
   catch {
     res.sendStatus(500);
   }
-
 })
 
 app.post('/status', async (req, res) => {
