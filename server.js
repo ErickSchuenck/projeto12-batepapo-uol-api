@@ -30,6 +30,29 @@ const participants = db.collection("participants");
 const messages = db.collection("messages");
 
 
+setInterval(() => {
+  console.log('Removendo participante inativo')
+  clearIdleUsers()
+}, 1000)
+
+async function clearIdleUsers() {
+  let currentTime = dayjs().format('HH:MM:SS');
+  let currentParticipants = await participants.find().toArray()
+  console.log(currentParticipants)
+  if (currentParticipants) {
+    currentParticipants.forEach(async (user) => {
+      if (Date.now() - user.lastStatus >= 10000)
+        await messages.insertOne({
+          from: user.name,
+          to: 'Todos',
+          text: 'sai da sala',
+          type: 'status',
+          time: currentTime,
+        })
+      await participants.deleteOne(user);
+    })
+  }
+}
 
 app.post('/participants', async (req, res) => {
   const userSchema = joi.string().required();
