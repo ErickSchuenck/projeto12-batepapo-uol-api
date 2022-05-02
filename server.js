@@ -72,27 +72,31 @@ app.get('/participants', async (req, res) => {
 })
 
 app.post('/messages', async (req, res) => {
-  let { to } = req.body;
-  let { text } = req.body;
-  let { type } = req.body;
+  let { to, text, type } = req.body;
   let currentTime = dayjs().format('HH:mm:ss');
   let user = req.headers.user;
 
-  // const toSchema = joi.string().required();
-  // const typeSchema = joi.string().required();
-  // const fromSchema = joi.string().required();
-
-  // const validation = userSchema.validate(name)
+  const messageSchema = joi.object({
+    to: joi.string().min(1).required(),
+    text: joi.string().min(1).required(),
+    type: joi.valid('message', 'private_message')
+  })
 
   try {
-    await messages.insertOne({
-      from: user,
-      to: to,
-      text: text,
-      type: type,
-      time: currentTime,
-    })
-    res.send(201)
+    const validation = messageSchema.validate(req.body);
+    if (!validation.error) {
+      await messages.insertOne({
+        from: user,
+        to: to,
+        text: text,
+        type: type,
+        time: currentTime,
+      })
+      res.sendStatus(201)
+    } else {
+      res.send(validation.error)
+    }
+
   } catch (error) {
     res.sendStatus(500);
     console.log(error)
@@ -100,16 +104,39 @@ app.post('/messages', async (req, res) => {
 })
 
 app.get('/messages', async (req, res) => {
-  // let limit = req.query.limit
 
   try {
     const messagesThatWillBeSent = await messages
       .find()
       .toArray();
-    // let lastNMessages = messages.splice(messages.length - limit + 1, messages.length);
     res.send(messagesThatWillBeSent);
-  } catch {
+  }
+  catch {
     res.sendStatus(500);
   }
 
+})
+
+app.post('/status', async (req, res) => {
+  let user = req.headers.user;
+  try {
+    let loggedUser = await participants.findOne({ name: user })
+    if (!loggedUser) {
+      res.sendStatus(404);
+      return;
+    }
+
+    if (loggedUser) {
+      participants.updateOne(
+        {
+          name: user
+        },
+        { $set: { lastStatus: Date.now() } }
+      )
+    }
+    res.sendStatus(200)
+  } catch (error) {
+    console.error('Could not post status', e);
+    res.sendStatus(304)
+  }
 })
