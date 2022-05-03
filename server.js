@@ -3,7 +3,6 @@ import cors from "cors";
 import { MongoClient, ObjectId } from "mongodb";
 import dotenv from "dotenv";
 import joi from "joi";
-import { text } from "express";
 import dayjs from 'dayjs'
 
 let db;
@@ -31,27 +30,24 @@ const messages = db.collection("messages");
 
 
 setInterval(() => {
-  console.log('Removendo participante inativo')
+  console.log('Removendo participantes inativos')
   clearIdleUsers()
-}, 1000)
+}, 15000)
 
 async function clearIdleUsers() {
-  let currentTime = dayjs().format('HH:MM:SS');
-  let currentParticipants = await participants.find().toArray()
-  console.log(currentParticipants)
-  if (currentParticipants) {
-    currentParticipants.forEach(async (user) => {
-      if (Date.now() - user.lastStatus >= 10000)
-        await messages.insertOne({
-          from: user.name,
-          to: 'Todos',
-          text: 'sai da sala',
-          type: 'status',
-          time: currentTime,
-        })
-      await participants.deleteOne(user);
+  const now = Date.now();
+  const usersArr = await participants.find({}).toArray();
+  const inativeUsers = usersArr.filter(user => now - user.lastStatus >= 10000);
+  inativeUsers.forEach(element => {
+    participants.deleteOne({ name: element.name })
+    messages.insertOne({
+      from: element.name,
+      to: 'Todos',
+      text: 'sai da sala',
+      type: 'status',
+      time: dayjs().format('HH:MM:ss')
     })
-  }
+  })
 }
 
 app.post('/participants', async (req, res) => {
@@ -67,6 +63,14 @@ app.post('/participants', async (req, res) => {
           name: name,
           lastStatus: Date.now()
         });
+        await messages.insertOne(
+          {
+            from: name,
+            to: 'Todos',
+            text: 'entra na sala...',
+            type: 'status',
+            time: dayjs().format('HH:MM:ss')
+          })
         res.sendStatus(200)
       }
       if (currentUser) {
@@ -163,5 +167,30 @@ app.post('/status', async (req, res) => {
   } catch (error) {
     console.error('Could not post status', e);
     res.sendStatus(304)
+  }
+})
+
+app.delete('/messages/:id', async (req, res) => {
+  let user = req.headers.user
+  let id = req.params.id
+  try {
+    const message = await messages.findOne({
+      _id: ObjectId(id)
+    })
+    if (!message) {
+      res.sendStatus(404)
+      return
+    }
+    if (message.from !== user) {
+      res.sendStatus(401)
+      return
+    } else {
+      await messages.deleteOne({
+        _id: ObjectId(id)
+      })
+    }
+  }
+  catch (error) {
+    res.send(error)
   }
 })
