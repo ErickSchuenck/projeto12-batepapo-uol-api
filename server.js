@@ -25,13 +25,8 @@ await mongoClient.connect()
   })
   .catch(error => console.log("Database conection problem", error));
 
-
-
 const participants = db.collection("participants");
 const messages = db.collection("messages");
-
-
-
 
 setInterval(() => {
   console.log('Removendo participantes inativos')
@@ -121,7 +116,6 @@ app.post('/messages', async (req, res) => {
     } else {
       res.send(validation.error)
     }
-
   } catch (error) {
     res.sendStatus(500);
     console.log(error)
