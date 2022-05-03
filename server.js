@@ -7,14 +7,17 @@ import dayjs from 'dayjs'
 
 let db;
 const app = express();
+const messageSchema = joi.object({
+  to: joi.string().min(1).required(),
+  text: joi.string().min(1).required(),
+  type: joi.valid('message', 'private_message')
+})
 app.use(cors());
 app.use(express.json());
 dotenv.config();
 
-// para colocar a porta online
 app.listen(5000, () => console.log('server ligado na porta 5000'));
 
-// para se conectar ao mondodb
 const mongoClient = new MongoClient(process.env.MONGO_URL);
 await mongoClient.connect()
   .then(() => {
@@ -22,11 +25,12 @@ await mongoClient.connect()
   })
   .catch(error => console.log("Database conection problem", error));
 
-// coleções
 
 
 const participants = db.collection("participants");
 const messages = db.collection("messages");
+
+
 
 
 setInterval(() => {
@@ -102,12 +106,6 @@ app.post('/messages', async (req, res) => {
   let { to, text, type } = req.body;
   let currentTime = dayjs().format('HH:mm:ss');
   let user = req.headers.user;
-
-  const messageSchema = joi.object({
-    to: joi.string().min(1).required(),
-    text: joi.string().min(1).required(),
-    type: joi.valid('message', 'private_message')
-  })
 
   try {
     const validation = messageSchema.validate(req.body);
@@ -188,6 +186,36 @@ app.delete('/messages/:id', async (req, res) => {
       await messages.deleteOne({
         _id: ObjectId(id)
       })
+    }
+  }
+  catch (error) {
+    res.send(error)
+  }
+})
+
+app.put('/messages/id', async (req, res) => {
+  let message = req.body.text
+  let user = req.headers.user
+  let id = req.params.id
+  try {
+    const validation = messageSchema.validate(req.body);
+    if (!validation.error) {
+      const findMessage = messages.findOne({ _id: ObjectId(id) })
+      if (!findMessage) {
+        res.status(404);
+        return;
+      }
+      if (findMessage.from !== user) {
+        res.status(401);
+        return;
+      }
+      if (findMessage) {
+        await messages.updateOne({ _id: id }, { $set: { text: message } })
+        res.sendStatus(200)
+      }
+    }
+    if (validation.error) {
+      res.sendStatus(422)
     }
   }
   catch (error) {
